@@ -1,2 +1,2 @@
 dummy file to testjenkins pipeline
-
+-- change 1 detected
