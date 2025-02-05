@@ -2,24 +2,26 @@ pipeline {
     agent any
 
     environment {
-        // Set Python environment variable (if needed for your setup)
-        PYTHON = 'python3'
-        PIP = 'pip3'
+        // Declare environment variables if needed
+    }
+
+    tools {
+        python 'Python 3.12' // Ensure Python is available
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the code from GitHub repository
-                git 'https://github.com/Manjyyot/flaskMicroblog.git'
+                checkout scm // Checkout the latest code from GitHub
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Install Python dependencies
-                    sh '${PIP} install -r requirements.txt'
+                    // Create virtual environment and install dependencies
+                    sh 'python3 -m venv venv'
+                    sh '. venv/bin/activate && pip install -r requirements.txt'
                 }
             }
         }
@@ -28,40 +30,43 @@ pipeline {
             steps {
                 script {
                     // Run tests using pytest
-                    sh '${PYTHON} -m pytest tests.py'
+                    sh '. venv/bin/activate && pytest --maxfail=1 --disable-warnings -q'
                 }
             }
         }
 
         stage('Deploy') {
             when {
-                branch 'main'
+                branch 'main' // Deploy only on the 'main' branch
             }
             steps {
                 script {
-                    // Placeholder for deploy step (e.g., SSH or cloud deployment)
-                    echo 'Deploying to staging...'
-                    // You can uncomment the following line if you set up a real deployment environment
-                    // sh 'bash deploy.sh'  // Add your deploy script here
+                    // Deploy to EC2 instance
+                    sh '''#!/bin/bash
+                    ssh -i /path/to/your-key.pem ubuntu@54.204.123.85 << 'EOF'
+                        cd /home/ubuntu/flaskMicroblog
+                        git pull origin main
+                        source venv/bin/activate
+                        pip install -r requirements.txt
+                        sudo systemctl restart flask-microblog
+                    EOF
+                    '''
                 }
             }
         }
     }
 
     post {
-        always {
-            // Always send notification (e.g., email) or cleanup resources after the pipeline
-            echo 'Cleaning up resources...'
-        }
-
         success {
-            // Success notification (e.g., email or Slack) if build passes
-            echo 'Build passed! Deploying application...'
+            echo 'Build completed successfully.'
         }
 
         failure {
-            // Failure notification (e.g., email or Slack) if build fails
-            echo 'Build failed! Please check logs.'
+            echo 'Build failed. Check logs.'
+        }
+
+        always {
+            echo 'Cleaning up resources...'
         }
     }
 }
