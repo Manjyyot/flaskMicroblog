@@ -1,14 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        // Declare environment variables if needed
-    }
-
-    tools {
-        python 'Python 3.12' // Ensure Python is available
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -19,8 +11,8 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Create virtual environment and install dependencies
-                    sh 'python3 -m venv venv'
+                    // Ensure Python is installed and create a virtual environment
+                    sh 'python3 -m venv venv || python -m venv venv' // Adjust depending on the Python version available
                     sh '. venv/bin/activate && pip install -r requirements.txt'
                 }
             }
