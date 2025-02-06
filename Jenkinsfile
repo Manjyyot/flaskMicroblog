@@ -1,64 +1,42 @@
 pipeline {
     agent any
-
+    
     stages {
         stage('Checkout') {
             steps {
-                checkout scm // Checkout the latest code from GitHub
+                // Checkout code from your repository
+                git 'https://github.com/Manjyyot/flaskMicroblog.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Ensure Python is installed and create a virtual environment
-                    sh 'python3 -m venv venv || python -m venv venv' // Adjust depending on the Python version available
+                    // Set up a virtual environment
+                    sh 'python3 -m venv venv'
+                    
+                    // Install dependencies from the requirements file
                     sh '. venv/bin/activate && pip install -r requirements.txt'
                 }
             }
         }
 
-        stage('Run Tests') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Run tests using pytest
-                    sh '. venv/bin/activate && pytest --maxfail=1 --disable-warnings -q'
+                    // Build the Docker image with a tag (flaskmicroblog)
+                    sh 'docker build -t flaskmicroblog:latest .'
                 }
             }
         }
 
-        stage('Deploy') {
-            when {
-                branch 'main' // Deploy only on the 'main' branch
-            }
+        stage('Run Docker Container') {
             steps {
                 script {
-                    // Deploy to EC2 instance
-                    sh '''#!/bin/bash
-                    ssh -i /path/to/your-key.pem ubuntu@54.204.123.85 << 'EOF'
-                        cd /home/ubuntu/flaskMicroblog
-                        git pull origin main
-                        source venv/bin/activate
-                        pip install -r requirements.txt
-                        sudo systemctl restart flask-microblog
-                    EOF
-                    '''
+                    // Run the Docker container in detached mode
+                    sh 'docker run -d --name flaskmicroblog_container flaskmicroblog:latest'
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Build completed successfully.'
-        }
-
-        failure {
-            echo 'Build failed. Check logs.'
-        }
-
-        always {
-            echo 'Cleaning up resources...'
         }
     }
 }
