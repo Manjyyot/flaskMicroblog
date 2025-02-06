@@ -16,9 +16,9 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Assuming a Python app with a requirements.txt
-                    // Run a Python install of dependencies
-                    sh 'pip install -r requirements.txt'
+                    // Create a virtual environment and install dependencies
+                    sh 'python3 -m venv venv'
+                    sh '. venv/bin/activate && pip install -r requirements.txt'
                 }
             }
         }
