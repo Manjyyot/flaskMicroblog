@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // You can define any global environment variables here
         DB_DEV_LIB = 'libpq-dev'
         DOCKER_VERSION = 'latest'  // Use the latest Docker version
     }
@@ -32,10 +31,20 @@ pipeline {
             steps {
                 script {
                     echo 'Building the project...'
-                    // Insert your build steps here (e.g., building a Docker image, or compiling code)
+                    // Adding debugging to verify Docker installation
                     sh '''
+                    echo "Docker Info:"
+                    docker info
+                    docker images
+
                     echo "Performing build tasks"
-                    # Example build command, adjust as needed
+                    # Ensure you have a valid Dockerfile in the root directory
+                    if [ -f Dockerfile ]; then
+                        echo "Dockerfile found, proceeding with build."
+                    else
+                        echo "Error: Dockerfile not found in the project root!"
+                        exit 1
+                    fi
                     docker build -t your-app-name .
                     '''
                 }
