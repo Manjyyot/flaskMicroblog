@@ -45,7 +45,9 @@ pipeline {
                         echo "Error: Dockerfile not found in the project root!"
                         exit 1
                     fi
-                    docker build -t your-app-name .
+
+                    echo "Starting Docker build..."
+                    docker build -t flaskmicroblog .
                     '''
                 }
             }
@@ -57,7 +59,7 @@ pipeline {
                     echo 'Running tests...'
                     // Running tests (example with dockerized tests)
                     sh '''
-                    docker run --rm your-app-name npm test
+                    docker run --rm flaskmicroblog npm test
                     '''
                 }
             }
@@ -69,7 +71,7 @@ pipeline {
                     echo 'Deploying the application...'
                     // Deployment steps go here (e.g., push Docker image to registry)
                     sh '''
-                    docker push your-app-name
+                    docker push flaskmicroblog
                     # Other deployment commands such as kubectl, aws-cli, etc.
                     '''
                 }
