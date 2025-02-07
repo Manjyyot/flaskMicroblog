@@ -4,7 +4,9 @@ pipeline {
     environment {
         DB_DEV_LIB = 'libpq-dev'
         DOCKER_VERSION = 'latest'  // Use the latest Docker version
-        DOCKERHUB_REPO = 'your_dockerhub_username/flaskmicroblog'  // Replace with your Docker Hub username/repo
+        DOCKERHUB_REPO = 'Manjyyot/flaskmicroblog'  // Docker Hub username/repo
+        EC2_IP = '3.82.17.168'  // EC2 public IP
+        SSH_KEY_PATH = '/path/to/ManjyotKeyPair.pem'  // Path to your EC2 SSH private key
     }
 
     stages {
@@ -75,7 +77,7 @@ pipeline {
 
                     sh '''
                     # SSH into EC2 and run the Docker container
-                    ssh -o StrictHostKeyChecking=no ubuntu@your-ec2-public-ip "
+                    ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@$EC2_IP "
                     docker pull $DOCKER_USERNAME/flaskmicroblog &&
                     docker run -d -p 5000:5000 $DOCKER_USERNAME/flaskmicroblog
                     "
