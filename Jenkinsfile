@@ -4,6 +4,7 @@ pipeline {
     environment {
         DB_DEV_LIB = 'libpq-dev'
         DOCKER_VERSION = 'latest'  // Use the latest Docker version
+        DOCKERHUB_REPO = 'your_dockerhub_username/flaskmicroblog'  // Replace with your Docker Hub username/repo
     }
 
     stages {
@@ -27,52 +28,57 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    echo 'Building the project...'
-                    // Adding debugging to verify Docker installation
-                    sh '''
-                    echo "Docker Info:"
-                    docker info
-                    docker images
-
-                    echo "Performing build tasks"
-                    # Ensure you have a valid Dockerfile in the root directory
-                    if [ -f Dockerfile ]; then
+                    echo 'Building the Docker image...'
+                    // Ensure you have a valid Dockerfile in the root directory
+                    if (fileExists('Dockerfile')) {
                         echo "Dockerfile found, proceeding with build."
-                    else
-                        echo "Error: Dockerfile not found in the project root!"
-                        exit 1
-                    fi
-
-                    echo "Starting Docker build..."
+                    } else {
+                        echo "Error: Dockerfile not found!"
+                        currentBuild.result = 'FAILURE'
+                        return
+                    }
+                    
+                    echo 'Building Docker image...'
+                    sh '''
                     docker build -t flaskmicroblog .
                     '''
                 }
             }
         }
 
-        stage('Test') {
+        stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    echo 'Running tests...'
-                    // Running tests (example with dockerized tests)
-                    sh '''
-                    docker run --rm flaskmicroblog npm test
-                    '''
+                    echo 'Pushing Docker image to Docker Hub...'
+                    // Log in to Docker Hub (Jenkins credentials required)
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        sh '''
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                        docker tag flaskmicroblog $DOCKER_USERNAME/flaskmicroblog
+                        docker push $DOCKER_USERNAME/flaskmicroblog
+                        '''
+                    }
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to EC2') {
             steps {
                 script {
-                    echo 'Deploying the application...'
-                    // Deployment steps go here (e.g., push Docker image to registry)
+                    echo 'Deploying Docker container to EC2...'
+
+                    // Make sure Docker is installed on your EC2
+                    // You will need to have your EC2 instance accessible from Jenkins via SSH
+
                     sh '''
-                    docker push flaskmicroblog
-                    # Other deployment commands such as kubectl, aws-cli, etc.
+                    # SSH into EC2 and run the Docker container
+                    ssh -o StrictHostKeyChecking=no ubuntu@your-ec2-public-ip "
+                    docker pull $DOCKER_USERNAME/flaskmicroblog &&
+                    docker run -d -p 5000:5000 $DOCKER_USERNAME/flaskmicroblog
+                    "
                     '''
                 }
             }
