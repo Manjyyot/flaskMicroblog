@@ -4,7 +4,7 @@ pipeline {
     environment {
         // You can define any global environment variables here
         DB_DEV_LIB = 'libpq-dev'
-        DOCKER_VERSION = '20.10'
+        DOCKER_VERSION = 'latest'  // Use the latest Docker version
     }
 
     stages {
@@ -14,25 +14,15 @@ pipeline {
                     echo 'Preparing the environment...'
                     // Installing required packages (libpq-dev, Docker)
                     sh '''
-                    # Update the package list
-                    echo "Updating package list..."
+                    echo Updating package list...
                     sudo apt-get update
-
-                    # Install required dependencies (libpq-dev, Docker)
-                    echo "Installing libpq-dev..."
-                    sudo apt-get install -y ${DB_DEV_LIB}
-                    echo "Installing apt transport and curl..."
+                    sudo apt-get install -y libpq-dev
                     sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-
-                    # Install Docker
-                    echo "Adding Docker GPG key..."
                     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-                    echo "Adding Docker repository..."
                     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-                    echo "Updating package list after adding Docker repository..."
                     sudo apt-get update
-                    echo "Installing Docker..."
-                    sudo apt-get install -y docker-ce=${DOCKER_VERSION}
+                    echo Installing Docker...
+                    sudo apt-get install -y docker-ce
                     '''
                 }
             }
